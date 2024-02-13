@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOME</title>
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}"> -->
+    <!-- <link rel="stylesheet" href="/static/css/footer.css"> -->
+    <link rel="stylesheet" href="static/css/nav.css">
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+    <!-- ... Your existing head content ... -->
+    <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+        integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+        integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+
+    <style>
+        #map {
+            height: 550px;
+            width: 750px;
+        }
+    </style>
+
+
+    <!--====== Bootstrap css ======-->
+    <link rel="stylesheet" href="static/css/bootstrap.min.css" />
+
+    <!--====== Line Icons css ======-->
+    <link rel="stylesheet" href="static/css/lineicons.css" />
+
+    <!--====== Style css ======-->
+    <link rel="stylesheet" href="static/css/starter.css" />
+
+    <link rel="stylesheet" href="static/css/about-01.css" />
+    <link rel="stylesheet" href="static/css/upload.css" />
+
+    <style>
+        .feedback-form {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px #888888;
+            width: 400px;
+        }
+
+        .btn {
+            margin: 5px;
+            padding: 5px 10px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .btn-sm {
+            font-size: 14px;
+        }
+
+        .fa-smile,
+        .fa-frown {
+            font-size: 24px;
+        }
+
+        .small {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* Style the dropdown content (hidden by default) */
+        .dropdown .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #000000;
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+        /* Style the dropdown links */
+        .dropdown .dropdown-content a {
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            color: black;
+        }
+
+        /* Change color of dropdown links on hover */
+        .dropdown .dropdown-content a:hover {
+            background-color: #ddd;
+        }
+
+        /* Show the dropdown menu when hovering over the "Our Services" link */
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+    </style>
+</head>
+
+<body style="padding: 0.1px;">
+    <!-- Start Landing Page -->
+    <nav class="nav" style="background-color: black; padding: 0px">
+        <div class="container" style="max-width: 1500px;">
+            <div class="logo">
+                <a href="/dashboard" class="logo">Atlantic Warriors</a>
+            </div>
+            <div id="mainListDiv" class="main_list">
+                <ul class="navlinks">
+                    <li><a href="/log_about">About Us</a></li>
+                    <li class="dropdown">
+                        <a href="/log_Services">Our Services</a>
+                        <div class="dropdown-content">
+                            <a href="/db">Database</a>
+                            <a href="/predict">Detect Plastic</a>
+                            <a href="/visualize">Visualize</a>
+                        </div>
+                    </li>
+                    <li><a href="/log_Testimonials">Testimonials</a></li>
+                    <li><a href="/log_team">Our Team</a></li>
+                    <li><a href="/log_contact">Contact Us</a></li>
+                    <li><a href="/login_reg">Login Out</a></li>
+                    <!-- <li><a href="https://github.com/TheNobody-12/Plastic-Detection-Reva">Info</a></li> -->
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="space" style="height: 60px;"></div>
+
+    <!-- Jquery needed -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <!-- Function used to shrink nav bar removing paddings and adding black background -->
+    <script>
+        $(document).ready(function () {
+            $('.navTrigger').click(function () {
+                $(this).toggleClass('active');
+                console.log("Clicked menu");
+                $("#mainListDiv").toggleClass("show_list");
+                $("#mainListDiv").fadeIn();
+            });
+
+            $(window).scroll(function () {
+                if ($(document).scrollTop() > 50) {
+                    $('.nav').addClass('affix');
+                    console.log("OK");
+                } else {
+                    $('.nav').removeClass('affix');
+                }
+            });
+        });
+
+    </script> <!-- End Landing Page -->
+
+    <center>
+        <h1 style="margin: 50px 0px;">Object Detection</h1>
+    </center>
+    <div id="updateButton"></div>
+
+    <!-- <div id="objectTable"></div> -->
+
+    <center>
+        <h2>Upload a file</h2>
+        <p class="lead" style="font-size: 16px;text-align: center;">Upload your image to get the <b>Plastic Density</b>
+        </p><br>
+    </center>
+    <form class="form-horizontal" action="/submit" method="post" enctype="multipart/form-data">
+        <center>
+            <div class="form-group">
+                <label class="control-label col-sm-2" for="pwd">Upload Your Image :</label>
+                <br><br>
+                <div class="col-sm-10">
+                    <input type="file" class="form-control" name="my_image" id="file-upload" style="
+                width: 300px;
+                font-size: 19px;
+            ">
+                </div>
+                <br><br>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <button type="submit" class="btn btn-success">Submit</button>
+                </div>
+        </center>
+        </div>
+        <br>
+    </form>
+
+
+    {% if image_name %}
+    <ul class="tabs">
+        <li class="tab">
+            <input type="radio" name="tabs" checked="checked" id="tab1" />
+            <label class="tb" for="tab1">Detected Results</label>
+            <div id="tab-content1" class="content">
+                <!-- <div class="tab-content-left">
+                    <img src="https://blog.codepen.io/wp-content/uploads/2012/06/Button-Fill-Black-Large.png"
+                        width="100" />
+                </div> -->
+                <div class="popup" id="popup">
+                    <img src="" alt="Enlarged Image" id="popupImage">
+                </div>
+                <div class="tab-content-right">
+                    <h1 style="color: #ccc;">Detection Results</h1>
+                    <hr>
+                    <center>
+                        <img src="{{image_name}}" height="400px" width="650px" id="popup">
+                    </center>
+                    <p style="font-size: 30px; color:white">Geolocation Of the Image</p>
+                    <div id="geolocation">
+                        <style>
+                            #latitude,
+                            #longitude {
+                                font-size: 15px;
+                                color: white;
+                            }
+
+                            #locationDiv h1 {
+                                font-size: 15px;
+                                color: white;
+                            }
+
+                            h3 {
+                                font-size: 15px;
+                                color: white;
+                            }
+                        </style>
+                        <div class="locationDiv">
+                            <h3>Total Number of Plastic Detected: {{ total_plastic }}</h3>
+                            <h3>Latitude: <span id="latitude">{{ lat }}</span></h3>
+                            <h3>Longitude: <span id="longitude">{{ lon }}</span></h3>
+                            <br>
+                            <p style="font-size: 30px; color:white">Location Details</p>
+                            <h3>Address : <span id="address">{{ address }}</span></h3>
+                            <h3>Country : <span id="country">{{ country }}</span></h3>
+                            <h3>Postcode : <span id="postcode">{{ postcode }}</span></h3>
+                        </div>
+                        <div class="feedback" >
+                            <center>
+                                <div id="feedback" class="d-flex align-items-center justify-content-center text-center pt-2">
+                                    <div>
+                                        <div data-controller="feedback" data-feedback-url="/images/38b01f1d-5130-4fda-a11e-1cef74e67dda"
+                                            data-feedback-id="38b01f1d-5130-4fda-a11e-1cef74e67dda" class="feedback-form">
+                                            <div class="small d-flex flex-row flex-nowrap align-items-center justify-content-center"
+                                                data-target="feedback.inputBar">
+                                                <span class="mr-1" style="color: #000;">Rate this result:</span>
+                                                <div class="d-flex">
+                                                    <a class="btn btn-sm" title="Rate good" data-action="click->feedback#rateGood" href="#"
+                                                        ondragstart="return false;">
+                                                        <i class="fal fa-smile fa-2x">😊</i>
+                                                    </a>
+                                                    <a class="btn btn-sm" title="Rate bad" data-action="click->feedback#rateBad" href="#"
+                                                        ondragstart="return false;">
+                                                        <i class="fal fa-frown fa-2x">😞</i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="small" data-target="feedback.thanksBar" style="display: none;">Thanks for your
+                                                feedback!
+                                            </div>
+                                            <!-- The feedback modal -->
+                                            <div id="feedback-modal" class="modal" style="display: none;">
+                                                <div class="modal-content" style="display: block; margin: 0 30%; width:40%; margin-top:80px">
+                                                    <p>What went wrong?</p>
+                                                    <textarea id="feedback-text" rows="4" cols="40"></textarea><br>
+                                                    <button id="submit-feedback" class="btn btn-success" onclick="get_feedback()">Submit</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                        </center>
+                    </div>
+                
+                        <!-- <span id="ImagePlasticCount"></span><br> -->
+                    </div>
+
+                </div>
+            </div>
+        </li>
+
+        <li class="tab">
+            <input type="radio" name="tabs" id="tab2" />
+            <label class="tb" for="tab2">Geoposition</label>
+            <div id="tab-content2" class="content">
+                <h1 style="color: #ccc;">Real Time Location</h1>
+                <center>
+                    <div id="map" style="width: 600px; height: 450px;"></div>
+                    <br> <br>
+                    <span id="ImagePlasticCount"></span><br>
+                    <button type="button" class="btn btn-success"> <a href="/db" style="color: rgb(255, 255, 255);"> Get
+                            Database</a> </button>
+                    <br> <br>
+                    <button type="button" class="btn btn-success"> <a href="/visualize"
+                            style="color: rgb(255, 255, 255);">
+                            Get
+                            Visualizations</a> </button>
+                </center>
+            </div>
+        </li>
+    </ul>
+    <div class="space" style="height: 800px;"></div>
+
+    {% endif %}
+    <br><br>
+    <br>
+    <br><br>
+    <style>
+        /* CSS for the pop-up */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup img {
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        /* Flex container for centering */
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Style for the canvas */
+        canvas {
+            max-width: 400px;
+            max-height: 100%;
+            border: 2px solid #000;
+        }
+    </style>
+
+    <br> <br>
+
+
+    <script>
+        const map = L.map('map');
+        // Initializes map
+
+        map.setView([51.505, -0.09], 13);
+        // Sets initial coordinates and zoom level
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+        // Sets map data source and associates with map
+
+        let marker, circle, zoomed;
+    </script>
+
+
+    <script>
+        function updateMap(latitude, longitude) {
+
+            if (isNaN(latitude) || isNaN(longitude)) {
+                alert("Please enter valid latitude and longitude values.");
+                return;
+            }
+
+            if (marker) {
+                map.removeLayer(marker);
+                map.removeLayer(circle);
+            }
+
+            marker = L.marker([latitude, longitude]).addTo(map);
+            circle = L.circle([latitude, longitude], { radius: 20 }).addTo(map);
+
+            if (!zoomed) {
+                zoomed = map.fitBounds(circle.getBounds());
+            }
+
+            map.setView([latitude, longitude]);
+        }
+
+        const latitude = document.getElementById("latitude").innerHTML;
+        const longitude = document.getElementById("longitude").innerHTML;
+
+        document.getElementById('updateButton').addEventListener('click', updateMap(latitude, longitude));     
+    </script>
+
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100&display=swap');
+
+        /* 
+body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 100vh;
+  background: #333;
+  margin: 0;
+} */
+
+
+        footer {
+            width: 100%;
+            position: absolute;
+            background: #3586ff;
+            min-height: 100px;
+            padding: 20px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        footer .social_icon,
+        footer .menu {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        footer .social_icon li,
+        footer .menu li {
+            list-style: none;
+        }
+
+        footer .social_icon li a {
+            font-size: 2em;
+            color: #ccc;
+            margin: 0 10px;
+            display: inline-block;
+            transition: 0.5s;
+        }
+
+        footer .social_icon li a:hover {
+            transform: translateY(-15px);
+            color: blue;
+        }
+
+        footer .menu li a {
+            font-size: 1.2em;
+            color: #ccc;
+            margin: 0 10px;
+            display: inline-block;
+            transition: 0.5s;
+            text-decoration: none;
+            opacity: 0.75;
+        }
+
+        footer .menu li a:hover {
+            opacity: 1;
+            color: #fff;
+        }
+
+
+        /* Footer CTA styles */
+        .footer-cta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 0;
+        }
+
+        .single-cta {
+            display: flex;
+            align-items: center;
+            padding-left: 150px;
+            /* Adjust as needed */
+            padding-right: 150px;
+            /* Adjust as needed */
+        }
+
+        .single-cta i {
+            color: #ff5e14;
+            font-size: 30px;
+            margin-right: 15px;
+        }
+
+        .cta-text {
+            display: inline-block;
+        }
+
+        .cta-text h4 {
+            color: #fff;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .cta-text span {
+            color: #fff;
+            font-size: 15px;
+        }
+
+        /* Footer content styles */
+        .footer-content {
+            position: relative;
+            z-index: 2;
+            padding: 30px 15px;
+            /* Add padding on left and right */
+        }
+
+        .footer-pattern img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 330px;
+            background-size: cover;
+            background-position: 100% 100%;
+        }
+
+        .footer-logo {
+            margin-bottom: 30px;
+        }
+
+        .footer-logo img {
+            max-width: 200px;
+        }
+
+        .footer-text p {
+            margin-bottom: 14px;
+            font-size: 14px;
+            color: #fff;
+            line-height: 28px;
+        }
+
+
+        /* Wave and animation */
+        footer .wave {
+            position: absolute;
+            top: -100px;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: url(https://i.ibb.co/rZt4Nhg/wave.png);
+            background-size: 1000px 100px;
+        }
+
+        footer .wave#wave1 {
+            z-index: 1000;
+            opacity: 1;
+            bottom: 0;
+            animation: animateWave 4s linear infinite;
+        }
+
+        footer .wave#wave2 {
+            z-index: 999;
+            opacity: 0.5;
+            bottom: 10px;
+            animation: animateWave_02 4s linear infinite;
+        }
+
+        footer .wave#wave3 {
+            z-index: 1000;
+            opacity: 0.2;
+            bottom: 0;
+            animation: animateWave 3s linear infinite;
+        }
+
+        footer .wave#wave4 {
+            z-index: 999;
+            opacity: 0.7;
+            bottom: 20px;
+            animation: animateWave_02 3s linear infinite;
+        }
+
+        @keyframes animateWave {
+            0% {
+                background-position-x: 1000px;
+            }
+
+            100% {
+                background-position-x: 0px;
+            }
+        }
+
+        @keyframes animateWave_02 {
+            0% {
+                background-position-x: 0px;
+            }
+
+            100% {
+                background-position-x: 1000px;
+            }
+        }
+    </style>
+
+    <footer>
+
+        <div class="waves">
+            <div class="wave" id="wave1"></div>
+            <div class="wave" id="wave2"></div>
+            <div class="wave" id="wave3"></div>
+            <div class="wave" id="wave4"></div>
+        </div>
+
+    </footer>
+
+    <!-- Ionicons Script-- > -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+
+
+</body>
+
+</html>
