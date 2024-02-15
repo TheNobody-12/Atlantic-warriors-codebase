@@ -1,9 +1,11 @@
+from google.cloud.sql.connector import Connector, IPTypes
+from flask import Flask
 from geopy.geocoders import Nominatim
-from flask import request, session, Flask, jsonify, render_template,redirect, url_for, flash
-import fileapp
+from flask import request, session, Flask, jsonify, render_template, redirect, url_for, flash
 import flask
 import logging
 import urllib
+import pymysql
 from ultralytics import YOLO
 from PIL import Image
 from google.cloud import storage
@@ -15,31 +17,63 @@ import pandas as pd
 import plotly.express as px
 import pandas as pd
 import exifread
-import sqlite3
 from fractions import Fraction
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-# import ultralytics
 
 # how to load model name from .env file
-
 model_to_load = 'Final_phase3.pt'
 model = YOLO(model_to_load, task='detect')
 # use geopy to get location from lat and lon
 geolocator = Nominatim(user_agent="object-detection-app")
 
 app = Flask(__name__)
-_BUCKET_NAME = 'trial-sk'
+
+
+# Google Cloud SQL (change this accordingly)
+PASSWORD = ""
+PUBLIC_IP_ADDRESS = ""
+DBNAME = ""
+PROJECT_ID = ""
+INSTANCE_NAME = ""
+
+# Cloud bucket name
+_BUCKET_NAME = ""
 CORS(app)
-db_path = 'REVA.db'
-# Old sqlite3 database connection
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + db_path
-#  new database connection
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@localhost/db_name'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+
+# initialize Python Connector object
+connector = Connector()
+
+# Python Connector database connection function
+
+
+def getconn():
+    conn = connector.connect(
+        INSTANCE_NAME,  # Cloud SQL Instance Connection Name
+        "pymysql",
+        user="root",
+        password="Sarthak1211",
+        db=DBNAME,
+        ip_type=IPTypes.PUBLIC  # IPTypes.PRIVATE for private IP
+    )
+    return conn
+
+
+app = Flask(__name__)
+
+# configure Flask-SQLAlchemy to use Python Connector
+
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://"
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "creator": getconn
+}
 app.secret_key = 'secret-key'
-db = SQLAlchemy(app)
-# Model definitions
+
+
+# initialize the app with the extension
+db = SQLAlchemy()
+db.init_app(app)
 
 
 class User(db.Model):
@@ -48,7 +82,7 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
     detections = db.relationship(
-        'ObjectDetectionData', backref='user', lazy=True)
+        'ObjectDetectionData', backref='User', lazy=True)
 
 
 class ObjectDetectionData(db.Model):
@@ -71,6 +105,7 @@ THIS SECTION CONTAIN OBJECT DETECTION RELATED CODE
 """
 
 # Location of the image taken fuctions
+
 
 def get_image_geolocation(file):
     # Function to extract geolocation from image metadata using exifread library
@@ -99,6 +134,7 @@ def get_image_geolocation(file):
         return {"latitude": latitude_dec, "longitude": longitude_dec}
     else:
         raise ValueError("Geolocation data not found in image metadata.")
+
 
 def parse_exif_gps_value(value):
     # Helper function to parse EXIF GPS coordinates in the format "[x, y, z]"
@@ -136,17 +172,18 @@ def fetch_lat_lon_from_db_1(filename):
     # connection = None  # Initialize the connection variable outside the try block
 
     try:
-        with sqlite3.connect(db_path) as connection:
+        with getconn() as connection:
             cursor = connection.cursor()
             user = session.get("user")
             # Fetch one of the latitudes and longitudes for the given filename from the database as per user
-            query = "SELECT latitude, longitude FROM object_detection_data WHERE user_id = ? AND filename = ? LIMIT 1"
-            cursor.execute(query, (user, filename))
+            query = "SELECT latitude, longitude FROM ObjectDetectionData WHERE user_id = %s AND filename = %s LIMIT 1", (
+                user, filename)
+            cursor.execute(query)
             result = cursor.fetchone()
 
         return result
 
-    except sqlite3.Error as error:
+    except Exception as error:
         print("Error fetching data from the database:", error)
 
     finally:
@@ -159,18 +196,18 @@ def fetch_lat_lon_from_db_1(filename):
 
 def fetch_lat_lon_from_db():
     # Connect to the database
-    conn = sqlite3.connect(db_path)
+    conn = getconn()
     cursor = conn.cursor()
 
     # Fetch unique filenames and their count from the database as per user
     user = session.get("user")
     cursor.execute(
-        "SELECT filename, COUNT(filename) FROM object_detection_data WHERE user_id = ? GROUP BY filename", (user,))
+        "SELECT filename, COUNT(filename) FROM ObjectDetectionData WHERE user_id = %s GROUP BY filename", (user))
     filenames_data = cursor.fetchall()
 
     # Fetch unique latitudes and longitudes from the database as per user
     cursor.execute(
-        "SELECT latitude, longitude FROM object_detection_data WHERE user_id = ? GROUP BY latitude, longitude", (user,))
+        "SELECT latitude, longitude FROM ObjectDetectionData WHERE user_id = %s GROUP BY latitude, longitude", (user))
     lat_lon_data = cursor.fetchall()
 
     # Close the database connection
@@ -179,12 +216,12 @@ def fetch_lat_lon_from_db():
     return filenames_data, lat_lon_data
 
 
-def Bubble_map(db_name):
+def Bubble_map():
     # get the data from the sqlite database
-    conn = sqlite3.connect(db_name)
+    conn = getconn()
     cursor = conn.cursor()
     # Fetch unique filenames and their count with their unique lat and long from the database as per user
-    cursor.execute("SELECT filename, COUNT(filename), latitude, longitude FROM object_detection_data WHERE user_id = ? GROUP BY filename, latitude, longitude", (session.get("user"),))
+    cursor.execute("SELECT filename, COUNT(filename), latitude, longitude FROM ObjectDetectionData WHERE user_id = %s GROUP BY filename, latitude, longitude", (session.get("user")))
     rows = cursor.fetchall()
 
     # Create a dataframe from the rows
@@ -226,17 +263,16 @@ THIS SECTION CONTAIN DATA BASE RELATED CODE
 
 def get_user_by_email(email):
     try:
-        connection = sqlite3.connect(db_path)
+        connection = getconn()
         cursor = connection.cursor()
 
         # Fetch the user by email
-        query = "SELECT * FROM User WHERE email = ?"
+        query = "SELECT * FROM User WHERE email = %s"
         cursor.execute(query, (email,))
         user = cursor.fetchone()
-
         return user
 
-    except sqlite3.Error as error:
+    except pymysql.Error as error:
         print("Error fetching user by email:", error)
 
     finally:
@@ -249,15 +285,15 @@ def get_user_by_email(email):
 
 def add_user(email, password, name):
     try:
-        connection = sqlite3.connect(db_path)
+        connection = getconn()
         cursor = connection.cursor()
         cursor.execute(
-            "INSERT INTO user (name, email, password) VALUES (?, ?, ?)",
+            "INSERT INTO User (name, email, password) VALUES (%s, %s, %s)",
             (name, email, password)
         )
         connection.commit()
         return True
-    except sqlite3.Error as e:
+    except Exception as e:
         print("Error adding user:", e)
         return False
     finally:
@@ -269,16 +305,16 @@ def add_user(email, password, name):
 
 def add_object_detection_data(user_id, filename, x1, y1, x2, y2, object_type, probability, latitude, longitude):
     try:
-        connection = sqlite3.connect(db_path)
+        connection = getconn()
         cursor = connection.cursor()
         cursor.execute(
-            "INSERT INTO object_detection_data (user_id, filename, x1, y1, x2, y2, object_type, probability, latitude, longitude) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?,?)",
+            "INSERT INTO ObjectDetectionData (user_id, filename, x1, y1, x2, y2, object_type, probability, latitude, longitude) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (user_id, filename, x1, y1, x2, y2,
              object_type, probability, latitude, longitude)
         )
         connection.commit()
         return True
-    except sqlite3.Error as e:
+    except Exception as e:
         print("Error adding object detection data:", e)
         return False
     finally:
@@ -290,14 +326,13 @@ def add_object_detection_data(user_id, filename, x1, y1, x2, y2, object_type, pr
 
 def get_object_detection_data(user_id):
     try:
-        connection = sqlite3.connect(db_path)
+        connection = getconn()
         cursor = connection.cursor()
         cursor.execute(
-            "SELECT * FROM object_detection_data WHERE user_id = ?",
-            (user_id,)
+            "SELECT * FROM ObjectDetectionData WHERE user_id = %s", (user_id)
         )
         return cursor.fetchall()
-    except sqlite3.Error as e:
+    except Exception as e:
         print("Error fetching object detection data:", e)
         return []
     finally:
@@ -309,14 +344,13 @@ def get_object_detection_data(user_id):
 
 def get_user(user_id):
     try:
-        connection = sqlite3.connect(db_path)
+        connection = getconn()
         cursor = connection.cursor()
         cursor.execute(
-            "SELECT * FROM user WHERE id = ?",
-            (user_id,)
+            "SELECT * FROM User WHERE id = %s", (user_id,)
         )
         return cursor.fetchone()
-    except sqlite3.Error as e:
+    except Exception as e:
         print("Error fetching user:", e)
         return None
     finally:
@@ -361,6 +395,7 @@ def login():
 
         # Retrieve the user from the database
         user = get_user_by_email(email)
+        print(user)
 
         if user and bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'):
             session['user'] = user[0]
@@ -375,7 +410,9 @@ def login():
 def dashboard():
     if 'user' in session:
         user_id = session['user']
+        print(user_id)
         user = get_user(user_id)
+        print(user)
 
         if user:
             return render_template('index.html', user=user)
@@ -459,8 +496,12 @@ def get_location(lat, lon):
 
 def create_database_tables():
     try:
-        with app.app_context():
+        with app.app_context() as connection:
+            # cursor = getconn()
+            # cursor = connection.cursor()
             db.create_all()
+            # cursor.execute(create_user_table_query)
+            # cursor.execute(create_object_detection_data_table_query)
         print("Database tables created successfully.")
     except Exception as e:
         print("Error creating database tables:", e)
@@ -472,13 +513,13 @@ create_database_tables()
 @app.route("/get_plastic_count/<filename>")
 def get_plastic_count(filename):
     # Connect to the database
-    conn = sqlite3.connect(db_path)
+    conn = getconn()
     cursor = conn.cursor()
 
     # Fetch unique filenames and their count from the database as per user
     user = session.get("user")
     cursor.execute(
-        "SELECT COUNT(filename) FROM object_detection_data WHERE user_id = ? AND filename = ?", (user, filename))
+        "SELECT COUNT(filename) FROM ObjectDetectionData WHERE user_id = %s AND filename = %s", (user, filename))
     plastic_count = cursor.fetchone()[0]
 
     # Close the database connection
@@ -513,7 +554,7 @@ def db():
 
 @app.route("/visualize")
 def bubblemap():
-    mapbox, bar = Bubble_map(db_path)
+    mapbox, bar = Bubble_map()
     return render_template('visualize.html', mapbox_plot_div=mapbox, bar_plot_div=bar)
 
 
@@ -540,7 +581,7 @@ def login_reg():
 @app.route("/submit", methods=['GET', 'POST'])
 def get_output():
     if request.method == 'POST':
-        con = sqlite3.connect(db_path)
+        con = getconn()
         user_id = session.get("user")
 
         di = DisplayInfo('File Upload')
@@ -562,7 +603,8 @@ def get_output():
         source = "static/" + filename
         img.save(source)
 
-        results = model(source,task="detect", imgsz=2176, conf=0.25)  # results list
+        results = model(source, task="detect", imgsz=2176,
+                        conf=0.25)  # results list
 
         r = results[0]  # img1 predictions (tensor)
         # plot a BGR numpy array of predictions
@@ -574,7 +616,7 @@ def get_output():
         blob.upload_from_filename(output)
 
         detect_path = "https://storage.googleapis.com/trial-sk/" + output
-                
+
         # contain coordinates of the detected objects
         boxes = results[0].boxes.xyxy.tolist()
         probability = results[0].boxes.conf.tolist()
@@ -671,4 +713,4 @@ def log_Testimonials():
 
 if __name__ == "__main__":
     # serve(app, port=8080)
-    app.run(debug = True)
+    app.run(debug=True)
