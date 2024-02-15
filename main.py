@@ -53,7 +53,7 @@ def getconn():
         INSTANCE_NAME,  # Cloud SQL Instance Connection Name
         "pymysql",
         user="root",
-        password="Sarthak1211",
+        password="",
         db=DBNAME,
         ip_type=IPTypes.PUBLIC  # IPTypes.PRIVATE for private IP
     )
