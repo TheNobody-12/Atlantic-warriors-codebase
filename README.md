@@ -87,4 +87,50 @@ Our solution's technical architecture supports scalability through:
 - Horizontal and vertical scaling.
 
 ## Read.md File for GitHub Repository:
-Please refer to the Read.md file in the GitHub repository for detailed information about the project setup, implementation, feedback, success metrics, and future steps.
+Please refer to the Read.md file in the GitHub repository for detailed information about the project setup, implementation, feedback, success metrics, future steps, and installation process.
+
+## Installation Process
+1. **Clone this repository:**
+    ```bash
+    git clone <repository-url>
+    ```
+
+2. **Install Python version 3.9 or higher:**
+    Download and install Python from the [official website](https://www.python.org/).
+
+3. **Install Virtual Environment using Pip in the command line:**
+    ```bash
+    pip install virtualenv
+    ```
+
+4. **Create a Virtual Environment in the command line:**
+    ```bash
+    python<version> -m venv <virtual-environment-name>
+    ```
+
+5. **Activate the Environment in the command line:**
+    - For Windows:
+        ```bash
+        .\<virtual-environment-name>\Scripts\activate
+        ```
+    - For macOS/Linux:
+        ```bash
+        source <virtual-environment-name>/bin/activate
+        ```
+
+6. **Install all Python dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+7. **Run the code file using the following command:**
+    ```bash
+    python app.py
+    ```
+
+## Contributing
+Provide guidelines for contributing to the project.
+
+## License
+Include the project's license information.
+```
