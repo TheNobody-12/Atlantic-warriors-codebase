@@ -1,5 +1,10 @@
 # Project Title: Atlantic Warriors - Combating Plastic Pollution in Rivers
 
+## Demonstartion 
+Here is a video that explains more about this project:
+
+[![Watch the video](https://img.youtube.com/vi/jtcj3WGw5WI/0.jpg)](https://youtu.be/jtcj3WGw5WI?si=QtWc7lHMZapXku6t)
+
 ## Problem Statement:
 Plastic pollution in rivers poses a significant threat to both natural ecosystems and human societies. As plastics accumulate in waterways, they degrade into microplastics, harming aquatic life and posing risks to human health. Traditional monitoring methods are often cumbersome and expensive, hindering effective solutions to address this urgent issue.
 
