@@ -73,8 +73,6 @@ We track the success of our solution by monitoring:
 - User engagement metrics.
 - Performance and uptime of the application.
 
-## Demo Video:
-[Link to Demo Video](insert link here)
 
 ## Future Steps:
 1. Enhance data coverage.
